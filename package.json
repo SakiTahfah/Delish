@@ -1,0 +1,12 @@
+{
+  "name": "delish-monorepo",
+  "private": true,
+  "workspaces": ["packages/*", "apps/*"],
+  "scripts": {
+    "build": "npm run build -w delish-button && npm run build -w docs",
+    "dev": "npm run dev -w docs",
+    "test": "npm test -w delish-button",
+    "size": "npm run size -w delish-button",
+    "typecheck": "npm run typecheck --workspaces"
+  }
+}

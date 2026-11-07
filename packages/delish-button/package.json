@@ -1,0 +1,60 @@
+{
+  "name": "delish-button",
+  "version": "0.1.0",
+  "description": "A tiny, accessible, dependency-free React button with a delicious springy press.",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    },
+    "./styles.css": "./dist/styles.css"
+  },
+  "files": [
+    "dist"
+  ],
+  "keywords": [
+    "react",
+    "button",
+    "spring",
+    "animation",
+    "accessible",
+    "wcag"
+  ],
+  "scripts": {
+    "build": "tsup && node scripts/use-client.mjs && esbuild src/styles.css --minify --outfile=dist/styles.css --log-level=warning",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "size": "node scripts/size.mjs"
+  },
+  "peerDependencies": {
+    "react": ">=18"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.1.0",
+    "@testing-library/user-event": "^14.5.2",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "axe-core": "^4.10.0",
+    "jsdom": "^25.0.1",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.2",
+    "vitest": "^3.2.7"
+  }
+}

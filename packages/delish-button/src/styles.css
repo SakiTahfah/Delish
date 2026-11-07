@@ -1,0 +1,245 @@
+/* delish-button — tokens live in :where() (zero specificity) so any class you pass wins. */
+
+:where(.delish, .delish-press) {
+  --delish-accent: #c2361c;
+  --delish-on-accent: #ffffff;
+
+  --delish-filled-bg: var(--delish-accent);
+  --delish-filled-fg: var(--delish-on-accent);
+  --delish-filled-hover-bg: color-mix(in srgb, var(--delish-filled-bg), #000 12%);
+
+  --delish-ghost-bg: transparent;
+  --delish-ghost-fg: var(--delish-accent);
+  --delish-ghost-border: color-mix(in srgb, var(--delish-accent), transparent 70%);
+  --delish-ghost-hover-bg: color-mix(in srgb, var(--delish-accent), transparent 90%);
+
+  --delish-radius: 999px;
+  --delish-font-family: inherit;
+  --delish-font-weight: 600;
+  --delish-focus-ring: var(--delish-accent);
+  --delish-disabled-opacity: 0.45;
+
+  --delish-height: 44px;
+  --delish-padding-x: 20px;
+  --delish-font-size: 15px;
+  --delish-gap: 8px;
+  --delish-icon-size: 18px;
+
+  /* Overwritten inline by the component from `bounce`; these are the bounce=0.5 defaults. */
+  --delish-press-scale: 0.9;
+  --delish-long-scale: 0.82;
+  --delish-press-duration: 140ms;
+  --delish-long-duration: 380ms;
+}
+
+:where(.delish[data-size='sm']) {
+  --delish-height: 32px;
+  --delish-padding-x: 14px;
+  --delish-font-size: 13px;
+  --delish-gap: 6px;
+  --delish-icon-size: 15px;
+}
+
+:where(.delish[data-size='lg']) {
+  --delish-height: 52px;
+  --delish-padding-x: 26px;
+  --delish-font-size: 17px;
+  --delish-gap: 10px;
+  --delish-icon-size: 20px;
+}
+
+.delish {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  height: var(--delish-height);
+  min-width: var(--delish-height);
+  padding: 0 var(--delish-padding-x);
+  margin: 0;
+  border: 1.5px solid transparent;
+  border-radius: var(--delish-radius);
+  font-family: var(--delish-font-family);
+  font-size: var(--delish-font-size);
+  font-weight: var(--delish-font-weight);
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  transform: scale(1);
+  transition-property: transform, background-color, color, border-color, opacity;
+  transition-duration: var(--delish-spring-duration, 600ms), 150ms, 150ms, 150ms, 150ms;
+  transition-timing-function: var(--delish-spring, cubic-bezier(0.34, 1.56, 0.64, 1)), ease, ease, ease, ease;
+}
+
+.delish[data-variant='filled'] {
+  background-color: var(--delish-filled-bg);
+  color: var(--delish-filled-fg);
+}
+
+.delish[data-variant='ghost'] {
+  background-color: var(--delish-ghost-bg);
+  color: var(--delish-ghost-fg);
+  border-color: var(--delish-ghost-border);
+}
+
+@media (hover: hover) {
+  .delish[data-variant='filled']:not([aria-disabled='true']):hover {
+    background-color: var(--delish-filled-hover-bg);
+  }
+  .delish[data-variant='ghost']:not([aria-disabled='true']):hover {
+    background-color: var(--delish-ghost-hover-bg);
+  }
+}
+
+.delish:focus-visible {
+  outline: 2px solid var(--delish-focus-ring);
+  outline-offset: 2px;
+}
+
+.delish[data-icon-only] {
+  width: var(--delish-height);
+  padding: 0;
+}
+
+/* ── The press (also usable on any element via useDelish + .delish-press) ── */
+
+.delish-press {
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  transform: scale(1);
+  transition: transform var(--delish-spring-duration, 600ms) var(--delish-spring, cubic-bezier(0.34, 1.56, 0.64, 1));
+}
+
+.delish-press[data-press='long'] {
+  transition: transform var(--delish-spring-long-duration, 900ms) var(--delish-spring-long, cubic-bezier(0.34, 1.8, 0.64, 1));
+}
+
+.delish-press[data-pressed] {
+  transform: scale(var(--delish-press-scale));
+  transition: transform var(--delish-press-duration) cubic-bezier(0.3, 0, 0.5, 1);
+}
+
+.delish[data-press='long'] {
+  transition-duration: var(--delish-spring-long-duration, 900ms), 150ms, 150ms, 150ms, 150ms;
+  transition-timing-function: var(--delish-spring-long, cubic-bezier(0.34, 1.8, 0.64, 1)), ease, ease, ease, ease;
+}
+
+.delish[data-pressed] {
+  transform: scale(var(--delish-press-scale));
+  transition-duration: var(--delish-press-duration), 150ms, 150ms, 150ms, 150ms;
+  transition-timing-function: cubic-bezier(0.3, 0, 0.5, 1), ease, ease, ease, ease;
+}
+
+.delish-content {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--delish-gap);
+  transform: scale(1);
+  transition: transform var(--delish-spring-duration, 600ms) var(--delish-spring, cubic-bezier(0.34, 1.56, 0.64, 1)),
+    opacity 150ms ease;
+}
+
+:is(.delish, .delish-press)[data-press='long'] .delish-content {
+  transition: transform var(--delish-spring-long-duration, 900ms) var(--delish-spring-long, cubic-bezier(0.34, 1.8, 0.64, 1)),
+    opacity 150ms ease;
+}
+
+:is(.delish, .delish-press)[data-pressed][data-press='long'] .delish-content {
+  transform: scale(var(--delish-long-scale));
+  transition: transform var(--delish-long-duration) cubic-bezier(0.25, 0, 0.3, 1), opacity 150ms ease;
+}
+
+/* ── Icons, loading, disabled ───────────────────────────────────────────── */
+
+.delish-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  width: var(--delish-icon-size);
+  height: var(--delish-icon-size);
+}
+
+.delish-icon > svg {
+  width: 100%;
+  height: 100%;
+}
+
+.delish[data-loading] {
+  cursor: progress;
+}
+
+.delish[data-loading] .delish-content {
+  opacity: 0;
+}
+
+.delish-spinner {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: var(--delish-icon-size);
+  height: var(--delish-icon-size);
+  box-sizing: border-box;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: delish-spin 700ms linear infinite;
+}
+
+@keyframes delish-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.delish[aria-disabled='true']:not([data-loading]) {
+  opacity: var(--delish-disabled-opacity);
+  cursor: not-allowed;
+}
+
+.delish-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ── Accessibility preferences ──────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  :is(.delish, .delish-press),
+  :is(.delish, .delish-press)[data-pressed],
+  .delish-content,
+  :is(.delish, .delish-press)[data-pressed][data-press='long'] .delish-content {
+    transform: none;
+    transition-property: background-color, color, border-color, opacity;
+    transition-duration: 150ms;
+    transition-timing-function: ease;
+  }
+  /* Feedback without movement. */
+  :is(.delish, .delish-press)[data-pressed] {
+    opacity: 0.8;
+  }
+  .delish-spinner {
+    animation-duration: 1.6s;
+  }
+}
+
+@media (forced-colors: active) {
+  .delish {
+    border-color: ButtonText;
+  }
+  .delish:focus-visible {
+    outline-color: Highlight;
+  }
+}
