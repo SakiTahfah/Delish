@@ -2,9 +2,9 @@
 
 A tiny, accessible, dependency-free React button with a delicious springy press.
 
-- **Tap**: the button squishes to 0.9 and springs back.
-- **Long press**: the button stays down while the label sinks further, then it releases with a bigger bounce.
-- About 2.8 kB gzipped (JS + CSS). No dependencies. Meets WCAG 2.2 AA. The animation runs entirely in CSS.
+- **One surface**: the button and its label scale together. A press eases to 0.9, and holding it keeps sinking gently to 0.87. On release it springs back from wherever it is.
+- **Ripple**: spreads from the exact point you press (from the center for keyboard presses).
+- About 3.5 kB gzipped (JS + CSS). No dependencies. Meets WCAG 2.2 AA. The animation runs entirely in CSS.
 
 ## Install
 
@@ -35,9 +35,10 @@ import 'delish-button/styles.css'
 | `loadingLabel` | `string` | `"Loading"` |
 | `disabled` | `boolean` (uses `aria-disabled`) | `false` |
 | `pressScale` | `number` | `0.9` |
-| `longPressScale` | `number` | `0.82` |
+| `longPressScale` | `number` | `0.87` |
 | `longPressDelay` | `number` (ms) | `350` |
 | `bounce` | `number` (0–0.85) | `0.5` |
+| `ripple` | `boolean` | `true` |
 | `onLongPress` | `() => void` | — |
 
 `Delish` also accepts all native `<button>` props and forwards `ref`.

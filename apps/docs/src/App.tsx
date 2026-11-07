@@ -81,12 +81,12 @@ function Hero() {
         </div>
         <p className="hint" aria-live="polite">
           {count === 0 && held === 0
-            ? 'Tap for a quick squish. Hold for a deeper one.'
+            ? 'Tap anywhere on a button. Then try holding it.'
             : `${count} tap${count === 1 ? '' : 's'} · ${held} long press${held === 1 ? '' : 'es'}`}
         </p>
       </Stage>
       <ul className="facts">
-        <li>~2.8 kB gzipped, JS + CSS</li>
+        <li>~3.5 kB gzipped, JS + CSS</li>
         <li>Zero dependencies</li>
         <li>WCAG 2.2 AA</li>
         <li>Animated entirely in CSS</li>
@@ -100,8 +100,9 @@ function Variants() {
     <Section id="variants" title="Variants">
       <p>
         Two flavors. <strong>Filled</strong> for the thing you most want people to press, <strong>ghost</strong> for
-        everything next to it. Both share the same press: a tap squishes the button to 0.9 and springs it back; a long
-        press keeps the button down and sinks the label further, then releases with a bigger bounce.
+        everything next to it. Both share the same press. The button and its label are one surface, so they move
+        together: a tap eases the button to 0.9 and springs it back, and holding it lets it keep sinking, just a little,
+        to 0.87 before it springs back with a touch more bounce. A ripple spreads from wherever you press.
       </p>
       <Stage>
         <div className="row">
@@ -207,10 +208,11 @@ const [loading, setLoading] = useState(false)
 
 function Playground() {
   const [pressScale, setPressScale] = React.useState(0.9)
-  const [longPressScale, setLongPressScale] = React.useState(0.82)
+  const [longPressScale, setLongPressScale] = React.useState(0.87)
   const [longPressDelay, setLongPressDelay] = React.useState(350)
   const [bounce, setBounce] = React.useState(0.5)
   const [variant, setVariant] = React.useState<'filled' | 'ghost'>('filled')
+  const [ripple, setRipple] = React.useState(true)
 
   const slider = (
     label: string,
@@ -232,9 +234,10 @@ function Playground() {
   const props = [
     variant !== 'filled' && `variant="ghost"`,
     pressScale !== 0.9 && `pressScale={${pressScale}}`,
-    longPressScale !== 0.82 && `longPressScale={${longPressScale}}`,
+    longPressScale !== 0.87 && `longPressScale={${longPressScale}}`,
     longPressDelay !== 350 && `longPressDelay={${longPressDelay}}`,
     bounce !== 0.5 && `bounce={${bounce}}`,
+    !ripple && `ripple={false}`,
   ].filter(Boolean)
 
   return (
@@ -249,13 +252,14 @@ function Playground() {
             longPressScale={longPressScale}
             longPressDelay={longPressDelay}
             bounce={bounce}
+            ripple={ripple}
           >
             Taste it
           </Delish>
         </div>
         <div className="controls">
           {slider('pressScale', pressScale, setPressScale, 0.7, 1, 0.01)}
-          {slider('longPressScale', longPressScale, setLongPressScale, 0.6, 1, 0.01)}
+          {slider('longPressScale', longPressScale, setLongPressScale, 0.7, 1, 0.01)}
           {slider('longPressDelay', longPressDelay, setLongPressDelay, 150, 1000, 10, 'ms')}
           {slider('bounce', bounce, setBounce, 0, 0.85, 0.05)}
           <fieldset className="seg">
@@ -267,6 +271,10 @@ function Playground() {
               </label>
             ))}
           </fieldset>
+          <label className="check">
+            <input type="checkbox" checked={ripple} onChange={(e) => setRipple(e.target.checked)} />
+            <span>ripple</span>
+          </label>
         </div>
       </Stage>
       <Code>{`<Delish${props.length ? ' ' + props.join(' ') : ''}>Taste it</Delish>`}</Code>
@@ -359,16 +367,18 @@ export function Checkout() {
 `}</Code>
       <h3>Bring the press to anything</h3>
       <p>
-        {t('useDelish')} gives you the same press on your own elements: a link, a card, a tile. Add the {t('delish-press')} class for the spring, and put the part that should
-        sink on a long press inside an element with the {t('delish-content')} class.
+        {t('useDelish')} gives you the same press on your own elements: a link, a card, a tile. Add the{' '}
+        {t('delish-press')} class, render {t('ripples')} as the first child, and wrap your content in{' '}
+        {t('delish-content')} so it sits above the ripple.
       </p>
       <Code>{`
 import { useDelish } from 'delish-button'
 
 function Tile({ href, children }) {
-  const { pressProps } = useDelish({ pressScale: 0.96, longPressScale: 0.9 })
+  const { pressProps, ripples } = useDelish({ pressScale: 0.97, longPressScale: 0.95 })
   return (
     <a href={href} className="delish-press tile" {...pressProps}>
+      {ripples}
       <span className="delish-content">{children}</span>
     </a>
   )
@@ -395,10 +405,11 @@ function Api() {
           ['loading', 'boolean', 'false', 'Shows a spinner, keeps the width, sets aria-busy and blocks clicks.'],
           ['loadingLabel', 'string', '"Loading"', 'Text read to screen readers while loading.'],
           ['disabled', 'boolean', 'false', 'Blocks activation via aria-disabled, so the button stays focusable.'],
-          ['pressScale', 'number', '0.9', 'Scale of the whole button while pressed.'],
-          ['longPressScale', 'number', '0.82', 'Scale of the label during a long press (on top of pressScale).'],
+          ['pressScale', 'number', '0.9', 'Scale the button eases to on press, in about 140ms. The label moves with it.'],
+          ['longPressScale', 'number', '0.87', 'Scale the button keeps sinking to while held, reached at longPressDelay.'],
           ['longPressDelay', 'number', '350', 'Milliseconds held before a press becomes a long press.'],
-          ['bounce', 'number', '0.5', 'Spring overshoot, 0 (none) to 0.85 (wobbly). Long presses add 0.2.'],
+          ['bounce', 'number', '0.5', 'Spring overshoot, 0 (none) to 0.85 (wobbly). Long presses add 0.15.'],
+          ['ripple', 'boolean', 'true', 'Show a ripple spreading from the point of contact (the center for keyboard presses).'],
           ['onLongPress', '() => void', '—', 'Fires once when a press crosses longPressDelay. onClick still fires on release.'],
           ['type', 'string', '"button"', 'Defaults to "button" so it never submits a form by accident.'],
           ['className', 'string', '—', 'Added after "delish". Use it to override CSS variables.'],
@@ -408,13 +419,14 @@ function Api() {
       <h3>useDelish(options, handlers?)</h3>
       <p>
         Options are the press props above: {t('pressScale')}, {t('longPressScale')}, {t('longPressDelay')},{' '}
-        {t('bounce')}, {t('onLongPress')}, plus {t('disabled')}. Pass your own pointer and key handlers as the second
+        {t('bounce')}, {t('ripple')}, {t('onLongPress')}, plus {t('disabled')}. Pass your own pointer and key handlers as the second
         argument and they are called first.
       </p>
       <Table
         head={['Returns', 'Type', 'Description']}
         rows={[
           [t('pressProps'), t('object'), 'Event handlers, data-pressed / data-press attributes and the spring CSS variables. Spread onto your element.'],
+          [t('ripples'), t('ReactNode'), 'The ripple layer. Render it as the first child of your element.'],
           [t('pressed'), t('boolean'), 'True while held down.'],
           [t('longPressed'), t('boolean'), 'True once the current press has become a long press.'],
         ]}
@@ -464,8 +476,8 @@ function Theming() {
           ['--delish-gap', '8px', 'Space between icon and label (per size).'],
           ['--delish-icon-size', '18px', 'Icon and spinner size (per size).'],
           ['--delish-disabled-opacity', '0.45', 'Opacity when disabled.'],
-          ['--delish-press-duration', '140ms', 'How fast the button goes down.'],
-          ['--delish-long-duration', '380ms', 'How fast the label sinks on a long press.'],
+          ['--delish-ripple-color', 'currentColor', 'Ripple color.'],
+          ['--delish-ripple-opacity', '0.12 / 0.1', 'Ripple strength for filled / ghost. Kept low so text keeps 4.5:1 contrast.'],
         ].map(([a, b, c]) => [t(a), t(b), c])}
       />
       <Code lang="css">{`
@@ -492,7 +504,7 @@ function Accessibility() {
         <li>
           The focus ring only shows for keyboard focus ({t(':focus-visible')}) and uses a 2px outline with a 2px offset.
         </li>
-        <li>Default colors meet 4.5:1 text contrast for both variants, in every state.</li>
+        <li>Default colors meet 4.5:1 text contrast for both variants in every state, including under a full ripple.</li>
         <li>Sizes are 32px, 44px and 52px tall, all above the 24×24px minimum target size.</li>
         <li>
           {t('disabled')} uses {t('aria-disabled')} instead of the attribute, so the button stays in the tab order and
@@ -505,8 +517,8 @@ function Accessibility() {
           A long press never replaces a click: {t('onLongPress')} is extra, and {t('onClick')} still fires on release.
         </li>
         <li>
-          With {t('prefers-reduced-motion')}, Delish doesn&rsquo;t scale at all; a press dims the button slightly
-          instead.
+          With {t('prefers-reduced-motion')}, Delish doesn&rsquo;t scale at all and the ripple fades in place instead of
+          spreading; a press also dims the button slightly.
         </li>
         <li>Icons are {t('aria-hidden')}. Icon-only buttons need an {t('aria-label')}, and Delish warns if one is missing.</li>
         <li>Windows High Contrast (forced colors) mode gets a visible border and system focus color.</li>

@@ -41,6 +41,7 @@ export const Delish = React.forwardRef<HTMLButtonElement, DelishProps>(function 
     longPressScale,
     longPressDelay,
     bounce,
+    ripple,
     onLongPress,
     className,
     style,
@@ -60,8 +61,8 @@ export const Delish = React.forwardRef<HTMLButtonElement, DelishProps>(function 
   ref,
 ) {
   const inert = disabled || loading
-  const { pressProps } = useDelish(
-    { pressScale, longPressScale, longPressDelay, bounce, onLongPress, disabled: inert },
+  const { pressProps, ripples } = useDelish(
+    { pressScale, longPressScale, longPressDelay, bounce, ripple, onLongPress, disabled: inert },
     { onPointerDown, onPointerUp, onPointerLeave, onPointerCancel, onKeyDown, onKeyUp, onBlur, onContextMenu },
   )
 
@@ -92,6 +93,7 @@ export const Delish = React.forwardRef<HTMLButtonElement, DelishProps>(function 
         onClick?.(e)
       }}
     >
+      {ripples}
       <span className="delish-content">
         {iconStart != null && (
           <span className="delish-icon" aria-hidden="true">

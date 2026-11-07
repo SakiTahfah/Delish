@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { gzipSync } from 'node:zlib'
 
-const LIMIT = 3000 // bytes, JS + CSS gzipped
+const LIMIT = 4096 // bytes, JS + CSS gzipped
 let total = 0
 for (const f of ['dist/index.js', 'dist/styles.css']) {
   const gz = gzipSync(readFileSync(new URL('../' + f, import.meta.url))).length

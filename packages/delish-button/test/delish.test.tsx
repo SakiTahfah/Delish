@@ -3,6 +3,7 @@ import { render, screen, fireEvent, act } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import axe from 'axe-core'
 import { Delish, spring } from '../src'
+import { holdCurve } from '../src/spring'
 
 const Star = () => (
   <svg viewBox="0 0 24 24">
@@ -92,16 +93,56 @@ describe('Delish', () => {
     expect(btn).not.toHaveAttribute('data-pressed')
   })
 
-  it('passes press options to CSS variables', () => {
+  it('turns press options into one hold transition on the whole surface', () => {
     render(
-      <Delish pressScale={0.8} longPressScale={0.7}>
+      <Delish pressScale={0.92} longPressScale={0.85} longPressDelay={500}>
         Go
       </Delish>,
     )
     const btn = screen.getByRole('button')
-    expect(btn.style.getPropertyValue('--delish-press-scale')).toBe('0.8')
-    expect(btn.style.getPropertyValue('--delish-long-scale')).toBe('0.7')
+    expect(btn.style.getPropertyValue('--delish-hold-scale')).toBe('0.85')
+    expect(btn.style.getPropertyValue('--delish-hold-duration')).toBe('500ms')
+    expect(btn.style.getPropertyValue('--delish-hold-easing')).toMatch(/^linear\(/)
     expect(btn.style.getPropertyValue('--delish-spring')).toMatch(/^linear\(/)
+  })
+
+  it('ripples from the point of contact, then fades and cleans up after release', () => {
+    vi.useFakeTimers()
+    render(<Delish>Go</Delish>)
+    const btn = screen.getByRole('button')
+    // jsdom has no layout (0×0), so the contact point equals the client coordinates.
+    fireEvent.pointerDown(btn, { button: 0, clientX: 30, clientY: 40 })
+    const ripple = btn.querySelector<HTMLElement>('.delish-ripple')!
+    expect(ripple).toBeTruthy()
+    expect(ripple.parentElement).toHaveAttribute('aria-hidden', 'true')
+    const r = Math.hypot(30, 40) // reaches the farthest corner
+    expect(parseFloat(ripple.style.width)).toBeCloseTo(r * 2)
+    expect(parseFloat(ripple.style.left)).toBeCloseTo(30 - r)
+    expect(parseFloat(ripple.style.top)).toBeCloseTo(40 - r)
+    expect(ripple).not.toHaveAttribute('data-released')
+
+    fireEvent.pointerUp(btn)
+    act(() => vi.advanceTimersByTime(120))
+    expect(btn.querySelector('.delish-ripple')).toHaveAttribute('data-released')
+    act(() => vi.advanceTimersByTime(600))
+    expect(btn.querySelector('.delish-ripple')).toBeNull()
+  })
+
+  it('keyboard presses ripple from the center', () => {
+    render(<Delish>Go</Delish>)
+    const btn = screen.getByRole('button')
+    fireEvent.keyDown(btn, { key: ' ' })
+    const ripple = btn.querySelector<HTMLElement>('.delish-ripple')!
+    expect(ripple.style.left).toBe('0px') // center (0,0) of a 0×0 jsdom box, radius 0
+    expect(ripple.style.width).toBe('0px')
+  })
+
+  it('ripple={false} renders no ripple layer', () => {
+    render(<Delish ripple={false}>Go</Delish>)
+    const btn = screen.getByRole('button')
+    fireEvent.pointerDown(btn, { button: 0, clientX: 5, clientY: 5 })
+    expect(btn.querySelector('.delish-ripples')).toBeNull()
+    expect(btn).toHaveAttribute('data-pressed')
   })
 
   it('disabled: stays focusable, uses aria-disabled, blocks click and press', async () => {
@@ -122,6 +163,7 @@ describe('Delish', () => {
     expect(onClick).not.toHaveBeenCalled()
     fireEvent.pointerDown(btn, { button: 0 })
     expect(btn).not.toHaveAttribute('data-pressed')
+    expect(btn.querySelector('.delish-ripple')).toBeNull()
   })
 
   it('disabled submit buttons do not submit their form', async () => {
@@ -205,6 +247,27 @@ describe('Delish', () => {
       </main>,
     )
     await expectNoAxeViolations(container)
+  })
+})
+
+describe('holdCurve', () => {
+  const parse = (s: string) => s.slice(7, -1).split(',').map(Number)
+  it('reaches pressScale at ~140ms, then keeps slowing to longPressScale', () => {
+    const { easing, duration, target } = holdCurve(0.9, 0.87, 350)
+    expect(target).toBe(0.87)
+    expect(duration).toBe(350)
+    const p = parse(easing)
+    expect(p[0]).toBe(0)
+    expect(p[p.length - 1]).toBe(1)
+    // At t = 140/350 = 0.4 the surface should be at 0.9, i.e. (1-0.9)/(1-0.87) of the travel.
+    const at = (t: number) => 1 - (1 - target) * p[Math.round(t * (p.length - 1))]
+    expect(at(0.4)).toBeCloseTo(0.9, 2)
+    // Monotonic and decelerating: no kinks, no overshoot while held.
+    const steps = p.slice(1).map((v, i) => v - p[i])
+    steps.slice(1).forEach((d, i) => expect(d).toBeLessThanOrEqual(steps[i] + 1e-3))
+  })
+  it('just presses when longPressScale is not deeper than pressScale', () => {
+    expect(holdCurve(0.9, 0.95, 350)).toMatchObject({ target: 0.9, duration: 140 })
   })
 })
 

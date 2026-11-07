@@ -24,6 +24,29 @@ export function spring(bounce: number, response: number): { easing: string; dura
   return { easing: `linear(${points.join(',')})`, duration: Math.round(settle * 1000) }
 }
 
+/**
+ * The press-and-hold curve: one continuous transition from scale 1 that eases
+ * down to `pressScale` in ~140ms, then keeps sinking slowly toward `holdScale`,
+ * arriving exactly when the press becomes a long press. Because it's a single
+ * transition, releasing at any moment springs back from wherever it is.
+ */
+export function holdCurve(pressScale: number, holdScale: number, holdMs: number) {
+  const target = Math.min(holdScale, pressScale)
+  const duration = Math.round(Math.max(holdMs, 140))
+  // Fraction of the travel the quick press covers, and when it should get there.
+  const p1 = (1 - pressScale) / (1 - target || 1)
+  const t1 = 140 / duration
+  // One ease-out power curve 1-(1-t)^k through (t1, p1): fast start, then a
+  // continuously slowing sink — no kinks, velocity reaches 0 at the end.
+  const k = p1 >= 0.999 || t1 >= 0.999 ? 3 : Math.max(1, Math.log(1 - p1) / Math.log(1 - t1))
+  const steps = 24
+  const points: string[] = []
+  for (let i = 0; i <= steps; i++) {
+    points.push(String(Math.round((1 - (1 - i / steps) ** k) * 1000) / 1000))
+  }
+  return { easing: `linear(${points.join(',')})`, duration: p1 >= 0.999 ? 140 : duration, target }
+}
+
 const cache = new Map<string, ReturnType<typeof spring>>()
 
 /** Memoized `spring()` — buttons with the same settings share one curve. */

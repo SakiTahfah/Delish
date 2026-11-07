@@ -25,11 +25,18 @@
   --delish-gap: 8px;
   --delish-icon-size: 18px;
 
-  /* Overwritten inline by the component from `bounce`; these are the bounce=0.5 defaults. */
-  --delish-press-scale: 0.9;
-  --delish-long-scale: 0.82;
-  --delish-press-duration: 140ms;
-  --delish-long-duration: 380ms;
+  --delish-ripple-color: currentColor;
+  /* Kept low so text stays at 4.5:1 contrast over a full ripple. */
+  --delish-ripple-opacity: 0.12;
+
+  /* Set inline by the component from its props; these are fallbacks. */
+  --delish-hold-scale: 0.9;
+  --delish-hold-duration: 140ms;
+  --delish-hold-easing: cubic-bezier(0.3, 0, 0.5, 1);
+}
+
+:where(.delish[data-variant='ghost']) {
+  --delish-ripple-opacity: 0.1;
 }
 
 :where(.delish[data-size='sm']) {
@@ -92,7 +99,8 @@
   .delish[data-variant='filled']:not([aria-disabled='true']):hover {
     background-color: var(--delish-filled-hover-bg);
   }
-  .delish[data-variant='ghost']:not([aria-disabled='true']):hover {
+  /* While pressed the ripple replaces the hover tint, so the two never stack. */
+  .delish[data-variant='ghost']:not([aria-disabled='true']):not([data-pressed]):hover {
     background-color: var(--delish-ghost-hover-bg);
   }
 }
@@ -107,9 +115,14 @@
   padding: 0;
 }
 
-/* ── The press (also usable on any element via useDelish + .delish-press) ── */
+/* ── The press ─────────────────────────────────────────────────────────────
+   Button and label are one surface: only the button scales. On press it eases
+   to pressScale, keeps sinking slowly toward longPressScale while held, and
+   springs back from wherever it is on release. Also works on any element via
+   useDelish + .delish-press. */
 
 .delish-press {
+  position: relative;
   -webkit-touch-callout: none;
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
@@ -122,8 +135,8 @@
 }
 
 .delish-press[data-pressed] {
-  transform: scale(var(--delish-press-scale));
-  transition: transform var(--delish-press-duration) cubic-bezier(0.3, 0, 0.5, 1);
+  transform: scale(var(--delish-hold-scale));
+  transition: transform var(--delish-hold-duration) var(--delish-hold-easing);
 }
 
 .delish[data-press='long'] {
@@ -132,28 +145,48 @@
 }
 
 .delish[data-pressed] {
-  transform: scale(var(--delish-press-scale));
-  transition-duration: var(--delish-press-duration), 150ms, 150ms, 150ms, 150ms;
-  transition-timing-function: cubic-bezier(0.3, 0, 0.5, 1), ease, ease, ease, ease;
+  transform: scale(var(--delish-hold-scale));
+  transition-duration: var(--delish-hold-duration), 150ms, 150ms, 150ms, 150ms;
+  transition-timing-function: var(--delish-hold-easing), ease, ease, ease, ease;
 }
 
 .delish-content {
+  position: relative; /* paints above the ripples */
   display: inline-flex;
   align-items: center;
   gap: var(--delish-gap);
-  transform: scale(1);
-  transition: transform var(--delish-spring-duration, 600ms) var(--delish-spring, cubic-bezier(0.34, 1.56, 0.64, 1)),
-    opacity 150ms ease;
+  transition: opacity 150ms ease;
 }
 
-:is(.delish, .delish-press)[data-press='long'] .delish-content {
-  transition: transform var(--delish-spring-long-duration, 900ms) var(--delish-spring-long, cubic-bezier(0.34, 1.8, 0.64, 1)),
-    opacity 150ms ease;
+/* ── Ripple ─────────────────────────────────────────────────────────────── */
+
+.delish-ripples {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  overflow: hidden;
+  pointer-events: none;
 }
 
-:is(.delish, .delish-press)[data-pressed][data-press='long'] .delish-content {
-  transform: scale(var(--delish-long-scale));
-  transition: transform var(--delish-long-duration) cubic-bezier(0.25, 0, 0.3, 1), opacity 150ms ease;
+.delish-ripple {
+  position: absolute;
+  border-radius: 50%;
+  background: var(--delish-ripple-color);
+  opacity: var(--delish-ripple-opacity);
+  transform: scale(0);
+  /* Grows while held (slows as it nears the far edge), fades on release. */
+  animation: delish-ripple 600ms cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
+  transition: opacity 500ms ease-out;
+}
+
+.delish-ripple[data-released] {
+  opacity: 0;
+}
+
+@keyframes delish-ripple {
+  to {
+    transform: scale(1);
+  }
 }
 
 /* ── Icons, loading, disabled ───────────────────────────────────────────── */
@@ -218,17 +251,19 @@
 
 @media (prefers-reduced-motion: reduce) {
   :is(.delish, .delish-press),
-  :is(.delish, .delish-press)[data-pressed],
-  .delish-content,
-  :is(.delish, .delish-press)[data-pressed][data-press='long'] .delish-content {
+  :is(.delish, .delish-press)[data-pressed] {
     transform: none;
     transition-property: background-color, color, border-color, opacity;
     transition-duration: 150ms;
     transition-timing-function: ease;
   }
-  /* Feedback without movement. */
+  /* Feedback without movement: a slight dim, and ripples become a soft fade. */
   :is(.delish, .delish-press)[data-pressed] {
-    opacity: 0.8;
+    opacity: 0.85;
+  }
+  .delish-ripple {
+    animation: none;
+    transform: none;
   }
   .delish-spinner {
     animation-duration: 1.6s;
